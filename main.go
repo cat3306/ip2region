@@ -18,7 +18,7 @@ var (
 )
 
 func main() {
-	engine := gin.New()
+	engine := gin.Default()
 	engine.GET("/ip2regin", Ip2Regin)
 	engine.GET("/download/db", DownloadDb)
 	err := engine.Run("0.0.0.0:7878")
