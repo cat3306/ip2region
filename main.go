@@ -15,16 +15,29 @@ var (
 	ipDbPath  = "./ip2region.db"
 	ipDbFile1 = "https://fastly.jsdelivr.net/gh/lionsoul2014/ip2region@master/v1.0/data/ip2region.db"
 	ipDbFile2 = "https://fastly.jsdelivr.net/gh/bqf9979/ip2region@master/data/ip2region.db"
+	ip2Region *ip2region.Ip2Region
 )
 
 func main() {
+	err := initIpDb()
+	if err != nil {
+		panic(err)
+	}
 	engine := gin.Default()
 	engine.GET("/ip2regin", Ip2Regin)
 	engine.GET("/download/db", DownloadDb)
-	err := engine.Run("0.0.0.0:7878")
+	err = engine.Run("0.0.0.0:7878")
 	log.Println(err)
 }
 
+func initIpDb() error {
+	region, err := ip2region.New(ipDbPath)
+	if err != nil {
+		return err
+	}
+	ip2Region = region
+	return nil
+}
 func DownloadDb(c *gin.Context) {
 	n, err := downloadFile(ipDbPath, ipDbFile2)
 	if err != nil {
@@ -86,12 +99,7 @@ func ip2Regin(req *Ip2ReginReq) (interface{}, error) {
 	if req.Ip == "" {
 		return nil, errors.New("invalid ip")
 	}
-	region, err := ip2region.New(ipDbPath)
-	if err != nil {
-		return nil, err
-	}
-	defer region.Close()
-	info, err := region.MemorySearch(req.Ip)
+	info, err := ip2Region.MemorySearch(req.Ip)
 	if err != nil {
 		return nil, err
 	}
