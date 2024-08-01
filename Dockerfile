@@ -1,6 +1,5 @@
-FROM alpine:latest
-RUN apk add --no-cache curl
-WORKDIR /app
+FROM xyz-fun.tencentcloudcr.com/booster/alpine:1.0
 COPY ip2region.db /app/ip2region.db
-COPY ip2region /app/ip2region
+COPY ip2region /usr/bin/ip2region
+WORKDIR /app
 ENTRYPOINT ["ip2region"]
