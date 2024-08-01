@@ -26,10 +26,31 @@ func main() {
 	engine := gin.Default()
 	engine.GET("/ip2regin", Ip2Regin)
 	engine.GET("/download/db", DownloadDb)
+	engine.POST("/batch/ip2regin", BatchIp2Regin)
 	err = engine.Run("0.0.0.0:7878")
 	log.Println(err)
 }
 
+func BatchIp2Regin(c *gin.Context) {
+	ips := make([]string, 0)
+	err := c.BindJSON(&ips)
+	if err != nil {
+		RspError(c, err.Error())
+		return
+	}
+	list := make([]*IpInfo, 0)
+	for _, v := range ips {
+		info, err := ip2Regin(&Ip2ReginReq{
+			Ip: v,
+		})
+		if err != nil {
+			RspError(c, err.Error())
+			return
+		}
+		list = append(list, info)
+	}
+	RspOk(c, list)
+}
 func initIpDb() error {
 	region, err := ip2region.New(ipDbPath)
 	if err != nil {
@@ -93,9 +114,10 @@ type IpInfo struct {
 	Province string `json:"province"`
 	City     string `json:"city"`
 	ISP      string `json:"isp"`
+	Ip       string `json:"ip"`
 }
 
-func ip2Regin(req *Ip2ReginReq) (interface{}, error) {
+func ip2Regin(req *Ip2ReginReq) (*IpInfo, error) {
 	if req.Ip == "" {
 		return nil, errors.New("invalid ip")
 	}
@@ -104,12 +126,13 @@ func ip2Regin(req *Ip2ReginReq) (interface{}, error) {
 		return nil, err
 	}
 
-	return IpInfo{
+	return &IpInfo{
 		CityId:   info.CityId,
 		Country:  info.Country,
 		Region:   info.Region,
 		Province: info.Province,
 		City:     info.City,
 		ISP:      info.ISP,
+		Ip:       req.Ip,
 	}, err
 }
